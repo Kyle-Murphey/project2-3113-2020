@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     long int size = strtol(argv[2], &endptr, 10);
 
     // between 2^4 and 2^30
-    if (size < 16 || size > 1073741824‬)
+    if (size < 16 || size > 1073741824)
     {
         fprintf(stderr, "invalid allocation size\n");
         exit(-1);
