@@ -14,6 +14,12 @@
 #define FIRSTFIT "FIRSTFIT"
 #define NEXTFIT "NEXTFIT"
 #define WORSTFIT "WORSTFIT"
+#define REQUEST "REQUEST"
+#define RELEASE "RELEASE"
+#define LIST "LIST"
+#define FIND "FIND"
+#define AVAILABLE "AVAILABLE"
+#define ASSIGNED "ASSIGNED"
 
 /* unsigned char */
 typedef unsigned char byte;
@@ -26,9 +32,49 @@ typedef struct node {
     struct node* prev
 } node;
 
-void bestfit()
+void bestfit(FILE* file)
 {
+    byte line[50] = {0};
+    byte command[10] = {0};
+    byte c2[10] = {0};
+    byte c3[10] = {0};
 
+    int i = 0;
+    int j = 0;
+    while(fgets(line, sizeof(line), file) != NULL)
+    {
+        // line is a comment
+        if (line[0] == '#')
+            continue;
+
+        // line is not a comment
+        while(line[i] != ' ')
+        {
+            command[i] = line[i++];
+        }
+        if (strcmp(command, REQUEST) == 0)
+        {
+
+        }
+        else if (strcmp(command, RELEASE) == 0)
+        {
+
+        }
+        else if (strcmp(command, LIST) == 0)
+        {
+
+        }
+        else if (strcmp(command, FIND) == 0)
+        {
+
+        }
+        else
+        {
+            fprintf(stderr, "invalid command\n");
+            exit(-1);
+        }
+        i = 0;
+    }
 }
 
 void firstfit()
@@ -51,6 +97,7 @@ int main(int argc, char** argv)
     FILE* file;
     char* endptr;
     long int size = strtol(argv[2], &endptr, 10);
+    node* head = NULL;
 
     // between 2^4 and 2^30
     if (size < 16 || size > 1073741824)
@@ -72,7 +119,7 @@ int main(int argc, char** argv)
 
     if (strcmp(argv[1], BESTFIT) == 0)
     {
-        bestfit();
+        bestfit(file);
     }
     else if (strcmp(argv[1], FIRSTFIT) == 0)
     {
@@ -89,6 +136,8 @@ int main(int argc, char** argv)
     else
     {
         fprintf(stderr, "invalid method of allocation\n");
+        fclose(file);
         exit(-1);
     }
+    fclose(file);
 }
