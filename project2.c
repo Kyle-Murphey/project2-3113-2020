@@ -576,9 +576,12 @@ void nextfit(FILE* file, long unsigned int size, node** head)
     byte line[50] = {'\n'};
     byte command[10] = {0};
     long unsigned int totalSize = 0;
+    node * _curNode = (node*)malloc(sizeof(node));
+    memset(_curNode->pname, 0, sizeof(_curNode->pname));
 
     int i = 0;
-    while(fgets(line, sizeof(line), file) != NULL) {
+    while(fgets(line, sizeof(line), file) != NULL)
+    {
         // line is a comment
         if (line[0] == '#')
             continue;
@@ -592,7 +595,110 @@ void nextfit(FILE* file, long unsigned int size, node** head)
 
         if (strcmp(command, REQUEST) == 0)
         {
+            byte pname[17] = {0}; //process name
+            byte bpsize[11] = {0}; //process size stored as bytes
+            long unsigned int lpsize; //process size
+            int nameLength = 0;
 
+            int j = 0;
+            // get the process name
+            while (line[i] != ' ')
+            {
+                pname[j] = line[i];
+                ++nameLength;
+                ++j;
+                ++i;
+            }
+            ++i;
+            j = 0;
+
+            // get the size of allocation
+            while (line[i] != '\n' && line[i] != '\000')
+            {
+                bpsize[j] = line[i];
+                ++j;
+                ++i;
+            }
+            lpsize = atol(bpsize);
+
+            // check if allocation size is valid
+            if (lpsize > size || lpsize < 1) //not valid
+            {
+                printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
+            }
+            else //valid
+            {
+                if (*head == NULL)
+                {
+                    *head = (node*)malloc(sizeof(node));
+                    setHead(head, nameLength, pname, &totalSize, lpsize);
+                    _curNode = *head;
+                }
+                else
+                {
+                    node* newNode = (node*)malloc(sizeof(node));
+                    memset(newNode->pname, 0, sizeof(newNode->pname));
+                    node* temp = _curNode;
+                    int spotFound = FALSE;
+
+                    while (_curNode->next != NULL)
+                    {
+                        if ((_curNode->next->location - (_curNode->location + _curNode->size)) >= lpsize)
+                        {
+                            newNode->next = _curNode->next;
+                            _curNode->next = newNode;
+                            newNode->prev = _curNode;
+                            newNode->location = (*_curNode).location + (*_curNode).size;
+                            newNode->size = lpsize;
+                            for (int letter = 0; letter < nameLength; ++letter)
+                            {
+                                newNode->pname[letter] = pname[letter];
+                            }
+                            totalSize += newNode->size;
+                            printf("ALLOCATED %s %ld\n", pname, newNode->location);
+                            _curNode = newNode;
+                            spotFound = TRUE;
+                            break;
+                        }
+                        _curNode = _curNode->next;
+                    }
+
+                    if (size - (_curNode->size + _curNode->location) >= lpsize && spotFound == FALSE)
+                    {
+                        _curNode->next = newNode;
+                        newNode->prev = _curNode;
+                        newNode->next = NULL;
+                        newNode->location = (*_curNode).location + (*_curNode).size;
+                        newNode->size = lpsize;
+                        for (int letter = 0; letter < nameLength; ++letter)
+                        {
+                            newNode->pname[letter] = pname[letter];
+                        }
+                        totalSize += newNode->size;
+                        printf("ALLOCATED %s %ld\n", pname, newNode->location);
+                        _curNode = newNode;
+                    }
+                    else if ((**head).location != 0 && (**head).location >= lpsize && spotFound == FALSE)
+                    {
+                        (*head)->prev = newNode;
+                        newNode->prev = NULL;
+                        newNode->next = *head;
+                        newNode->location = 0;
+                        newNode->size = lpsize;
+                        for (int letter = 0; letter < nameLength; ++letter)
+                        {
+                            newNode->pname[letter] = pname[letter];
+                        }
+                        totalSize += newNode->size;
+                        printf("ALLOCATED %s %ld\n", pname, newNode->location);
+                        _curNode = newNode;
+                    }
+                    else
+                    {
+                        _curNode = temp;
+                    }
+                }
+            }
         }
         else if (strcmp(command, RELEASE) == 0)
         {
@@ -712,7 +818,7 @@ int main(int argc, char** argv)
     {
         bestfit(file, size, &head);
     }
-    else if (strcmp(/*argv[1]*/"FIRSTFIT", FIRSTFIT) == 0)
+    else if (strcmp(/*argv[1]*/"IRSTFIT", FIRSTFIT) == 0)
     {
         firstfit(file, size, &head);
     }
