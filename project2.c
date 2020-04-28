@@ -910,6 +910,21 @@ void worstfit(FILE* file, long unsigned int size, node** head)
     }
 }
 
+void deleteNodes(node **head)
+{
+    node* curNode = *head;
+    node* temp;
+
+    while(curNode->next != NULL)
+    {
+        temp = curNode->next;
+        free(curNode);
+        curNode = temp;
+    }
+    free(curNode);
+    *head = NULL;
+}
+
 int main(int argc, char** argv)
 {
     FILE* file;
@@ -958,4 +973,5 @@ int main(int argc, char** argv)
         exit(-1);
     }
     fclose(file);
+    deleteNodes(&head);
 }
