@@ -253,8 +253,8 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                     node* newProc = (node*)malloc(sizeof(node));
                     memset(newProc->pname, 0, sizeof(newProc->pname));
 
-                    node* tempProc = (node*)malloc(sizeof(node));
-                    memset(tempProc->pname, 0, sizeof(tempProc->pname));
+                    /*node* tempProc = (node*)malloc(sizeof(node));
+                    memset(tempProc->pname, 0, sizeof(tempProc->pname));*/
 
                     if ((*head)->next == NULL && (lpsize + totalSize) < size)
                     {
@@ -449,7 +449,6 @@ void firstfit(FILE* file, long unsigned int size, node** head)
             }
             ++i;
             j = 0;
-            //getName(line, pname, &i);
 
             // get the size of allocation
             while (line[i] != '\n' && line[i] != '\000')
@@ -490,15 +489,32 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                 }
                 else
                 {
+                    int spotFound = FALSE;
                     node* newNode = (node*)malloc(sizeof(node));
                     memset(newNode->pname, 0, sizeof(newNode->pname));
                     node* temp = *head;
 
                     while (temp->next != NULL)
                     {
+                        if ((temp->next->location - (temp->size + temp->location)) >= lpsize)
+                        {
+                            newNode->prev = temp;
+                            newNode->next = temp->next;
+                            temp->next = newNode;
+                            newNode->location = temp->location + temp->size;
+                            newNode->size = lpsize;
+                            for (int letter = 0; letter < nameLength; ++letter)
+                            {
+                                newNode->pname[letter] = pname[letter];
+                            }
+                            totalSize += newNode->size;
+                            spotFound = TRUE;
+                            printf("ALLOCATED %s %ld\n", pname, newNode->location);
+                            break;
+                        }
                         temp = temp->next;
                     }
-                    if (size - (temp->location + temp->size) >= lpsize)
+                    if (size - (temp->location + temp->size) >= lpsize && spotFound == FALSE)
                     {
                         temp->next = newNode;
                         newNode->prev = temp;
@@ -512,7 +528,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                         totalSize += newNode->size;
                         printf("ALLOCATED %s %ld\n", pname, newNode->location);
                     }
-                    else
+                    else if (spotFound == FALSE)
                     {
                         printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
                     }
@@ -691,12 +707,6 @@ int main(int argc, char** argv)
         fprintf(stderr, "error opening file\n");
         exit(-1);
     }
-
-    /**************************************************************
-     *
-     * Create dllist here before sending off to algos.
-     *
-     **************************************************************/
 
     if (strcmp(/*argv[1]*/"ESTFIT", BESTFIT) == 0)
     {
