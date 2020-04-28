@@ -1,0 +1,1 @@
+No resources were needed except the Linux Man pages, as the project was simply reading in data and doing some math. I did not need to consult with the internet or others.
