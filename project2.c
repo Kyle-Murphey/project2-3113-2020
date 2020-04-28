@@ -32,6 +32,20 @@ typedef struct node {
     struct node* prev
 } node;
 
+void setHead(node** head, int nameLength, byte pname[17], long unsigned int* totalSize, long unsigned int lpsize)
+{
+    (**head).location = 0;
+    (**head).next = NULL;
+    (**head).prev = NULL;
+    memset((**head).pname, 0, sizeof((**head).pname));
+    for (int letter = 0; letter < nameLength; ++letter)
+    {
+        (**head).pname[letter] = pname[letter];
+    }
+    (**head).size = lpsize;
+    *totalSize += lpsize;
+    printf("ALLOCATED %s %ld\n", pname, (**head).location);
+}
 
 void getName(byte* line, byte* pname, int* i)
 {
@@ -325,12 +339,6 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                         // check if room was found
                         if ((tempNode->next != NULL || tempNode->prev != NULL) && firstSpot == FALSE)
                         {
-                            //tempProc->next = tempNode->next;
-                            //tempNode->next = tempProc;
-                            //tempProc->prev = tempNode;
-                            //tempNode->next = newProc->next;
-                            //newProc->next = tempNode;
-                            //tempNode->prev = newProc;
                             int placed = FALSE;
                             newProc = *head;
                             while (newProc->next != NULL)
@@ -351,11 +359,6 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                 tempNode->prev = newProc;
                                 newProc->next = tempNode;
                             }
-
-                            //tempProc->next = tempNode->next;
-                            //tempNode->next = tempProc;
-                            //tempProc->prev = tempNode;
-
                             tempNode->location = location;
                             for (int letter = 0; letter < nameLength; ++letter)
                             {
@@ -375,8 +378,6 @@ void bestfit(FILE* file, long unsigned int size, node** head)
         }
         else if (strcmp(command, RELEASE) == 0)
         {
-            //byte* pname = (byte*)malloc(sizeof(byte[17]));
-            //memset(pname, 0, sizeof(byte[17]));
             byte pname[17] = {0};
             getName(line, pname, &i);
 
@@ -432,19 +433,117 @@ void firstfit(FILE* file, long unsigned int size, node** head)
 
         if (strcmp(command, REQUEST) == 0)
         {
+            byte pname[17] = {0}; //process name
+            byte bpsize[11] = {0}; //process size stored as bytes
+            long unsigned int lpsize; //process size
+            int nameLength = 0;
 
+            int j = 0;
+            // get the process name
+            while (line[i] != ' ')
+            {
+                pname[j] = line[i];
+                ++nameLength;
+                ++j;
+                ++i;
+            }
+            ++i;
+            j = 0;
+            //getName(line, pname, &i);
+
+            // get the size of allocation
+            while (line[i] != '\n' && line[i] != '\000')
+            {
+                bpsize[j] = line[i];
+                ++j;
+                ++i;
+            }
+            lpsize = atol(bpsize);
+
+            // check if allocation size is valid
+            if (lpsize > size || lpsize < 1) //not valid
+            {
+                printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
+            }
+            else //valid
+            {
+                if (*head == NULL)
+                {
+                    *head = (node*)malloc(sizeof(node));
+                    setHead(head, nameLength, pname, &totalSize, lpsize);
+                }
+                else if ((*head)->next == NULL && ((size - ((**head).location + (**head).size)) >= lpsize))
+                {
+                    node* newNode = (node*)malloc(sizeof(node));
+                    memset(newNode->pname, 0, sizeof(newNode->pname));
+                    (*head)->next = newNode;
+                    newNode->prev = *head;
+                    newNode->next = NULL;
+                    newNode->location = (**head).location + (**head).size;
+                    newNode->size = lpsize;
+                    for (int letter = 0; letter < nameLength; ++letter)
+                    {
+                        newNode->pname[letter] = pname[letter];
+                    }
+                    totalSize += newNode->size;
+                    printf("ALLOCATED %s %ld\n", pname, newNode->location);
+                }
+                else
+                {
+                    node* newNode = (node*)malloc(sizeof(node));
+                    memset(newNode->pname, 0, sizeof(newNode->pname));
+                    node* temp = *head;
+
+                    while (temp->next != NULL)
+                    {
+                        temp = temp->next;
+                    }
+                    if (size - (temp->location + temp->size) >= lpsize)
+                    {
+                        temp->next = newNode;
+                        newNode->prev = temp;
+                        newNode->next = NULL;
+                        newNode->location = temp->location + temp->size;
+                        newNode->size = lpsize;
+                        for (int letter = 0; letter < nameLength; ++letter)
+                        {
+                            newNode->pname[letter] = pname[letter];
+                        }
+                        totalSize += newNode->size;
+                        printf("ALLOCATED %s %ld\n", pname, newNode->location);
+                    }
+                    else
+                    {
+                        printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
+                    }
+                }
+            }
         }
         else if (strcmp(command, RELEASE) == 0)
         {
+            byte pname[17] = {0};
+            getName(line, pname, &i);
 
+            if (*head == NULL)
+            {
+                printf("FAIL %s %s\n", RELEASE, pname);
+            }
+            else
+            {
+                release(head, pname, &totalSize);
+            }
         }
         else if (strcmp(command, LIST) == 0)
         {
-
+            byte c2[17] = {0};
+            getName(line, (byte **)&c2, &i);
+            list(head, c2, totalSize, size);
         }
         else if (strcmp(command, FIND) == 0)
         {
-
+            byte pname[17] = {0};
+            getName(line, (byte **)&pname, &i);
+            find(head, pname);
         }
         else
         {
@@ -452,6 +551,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
             exit(-1);
         }
         i = 0;
+        memset(command, 0, sizeof(command));
     }
 }
 
@@ -480,15 +580,29 @@ void nextfit(FILE* file, long unsigned int size, node** head)
         }
         else if (strcmp(command, RELEASE) == 0)
         {
+            byte pname[17] = {0};
+            getName(line, pname, &i);
 
+            if (*head == NULL)
+            {
+                printf("FAIL %s %s\n", RELEASE, pname);
+            }
+            else
+            {
+                release(head, pname, &totalSize);
+            }
         }
         else if (strcmp(command, LIST) == 0)
         {
-
+            byte c2[17] = {0};
+            getName(line, (byte **)&c2, &i);
+            list(head, c2, totalSize, size);
         }
         else if (strcmp(command, FIND) == 0)
         {
-
+            byte pname[17] = {0};
+            getName(line, (byte **)&pname, &i);
+            find(head, pname);
         }
         else
         {
@@ -496,6 +610,7 @@ void nextfit(FILE* file, long unsigned int size, node** head)
             exit(-1);
         }
         i = 0;
+        memset(command, 0, sizeof(command));
     }
 }
 
@@ -524,15 +639,29 @@ void worstfit(FILE* file, long unsigned int size, node** head)
         }
         else if (strcmp(command, RELEASE) == 0)
         {
+            byte pname[17] = {0};
+            getName(line, pname, &i);
 
+            if (*head == NULL)
+            {
+                printf("FAIL %s %s\n", RELEASE, pname);
+            }
+            else
+            {
+                release(head, pname, &totalSize);
+            }
         }
         else if (strcmp(command, LIST) == 0)
         {
-
+            byte c2[17] = {0};
+            getName(line, (byte **)&c2, &i);
+            list(head, c2, totalSize, size);
         }
         else if (strcmp(command, FIND) == 0)
         {
-
+            byte pname[17] = {0};
+            getName(line, (byte **)&pname, &i);
+            find(head, pname);
         }
         else
         {
@@ -540,6 +669,7 @@ void worstfit(FILE* file, long unsigned int size, node** head)
             exit(-1);
         }
         i = 0;
+        memset(command, 0, sizeof(command));
     }
 }
 
@@ -568,7 +698,7 @@ int main(int argc, char** argv)
      *
      **************************************************************/
 
-    if (strcmp(/*argv[1]*/"BESTFIT", BESTFIT) == 0)
+    if (strcmp(/*argv[1]*/"ESTFIT", BESTFIT) == 0)
     {
         bestfit(file, size, &head);
     }
