@@ -477,14 +477,15 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                 else
                 {
                     int spotFound = FALSE;
-                    node* newNode = (node*)malloc(sizeof(node));
-                    memset(newNode->pname, 0, sizeof(newNode->pname));
+                    node* newNode;
                     node* temp = *head;
 
                     while (temp->next != NULL)
                     {
                         if ((temp->next->location - (temp->size + temp->location)) >= lpsize)
                         {
+                            newNode = (node*)malloc(sizeof(node));
+                            memset(newNode->pname, 0, sizeof(newNode->pname));
                             newNode->prev = temp;
                             newNode->next = temp->next;
                             temp->next = newNode;
@@ -503,6 +504,9 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                     }
                     if (size - (temp->location + temp->size) >= lpsize && spotFound == FALSE)
                     {
+                        newNode = (node*)malloc(sizeof(node));
+                        memset(newNode->pname, 0, sizeof(newNode->pname));
+
                         temp->next = newNode;
                         newNode->prev = temp;
                         newNode->next = NULL;
@@ -825,27 +829,30 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                     {
                         node* temp = (node*)malloc(sizeof(node));
                         memset(temp->pname, 0 , sizeof(temp->pname));
+                        int placed = FALSE;
                         newNode = *head;
                         while (newNode->next != NULL)
                         {
                             if ((newNode->location + newNode->size) == location)
                             {
                                 temp->next = newNode->next;
-                                temp->prev = newNode;
                                 newNode->next = temp;
-                                temp->location = temp->location + temp->size;
+                                temp->prev = newNode;
+                                temp->next->prev = temp;
+                                temp->location = location;
                                 temp->size = lpsize;
                                 for (int letter = 0; letter < nameLength; ++letter)
                                 {
                                     temp->pname[letter] = pname[letter];
                                 }
-                                totalSize += newNode->size;
+                                totalSize += temp->size;
                                 printf("ALLOCATED %s %ld\n", pname, temp->location);
+                                placed = TRUE;
                                 break;
                             }
                             newNode = newNode->next;
                         }
-                        if ((newNode->location + newNode->size) == location)
+                        if ((newNode->location + newNode->size) == location && placed == FALSE)
                         {
                             temp->next = newNode->next;
                             temp->prev = newNode;
@@ -907,7 +914,7 @@ int main(int argc, char** argv)
 {
     FILE* file;
     char* endptr;
-    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 20*/
+    long unsigned int size = strtol(argv[2], &endptr, 10)/* 268435456 50*/;
     node* head = NULL;
 
     if (argc != 4)
@@ -928,7 +935,7 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    if (strcmp(argv[1]/*"BESTFIT"*/, BESTFIT) == 0)
+    if (strcmp(argv[1]/*"ESTFIT"*/, BESTFIT) == 0)
     {
         bestfit(file, size, &head);
     }
