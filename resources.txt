@@ -1,1 +1,3 @@
-No resources were needed except the Linux Man pages, as the project was simply reading in data and doing some math. I did not need to consult with the internet or others.
+Linux Man pages
+https://www.geeksforgeeks.org/doubly-linked-list/
+https://www.youtube.com/watch?v=aV3s3fkriWY

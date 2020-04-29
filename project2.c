@@ -1118,7 +1118,6 @@ int main(int argc, char** argv)
     FILE* file;
     char* endptr; //holds extra data after strol()
     node* head = NULL;
-
     // enough args in CL
     if (argc < 4)
     {
