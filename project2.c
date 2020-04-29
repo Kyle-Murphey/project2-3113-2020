@@ -409,6 +409,7 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                 tempNode->prev = newProc;
                                 newProc->next = tempNode;
                             }
+                            // set the rest of the values for allocation
                             tempNode->location = location;
                             for (int letter = 0; letter < nameLength; ++letter)
                             {
@@ -467,13 +468,20 @@ void bestfit(FILE* file, long unsigned int size, node** head)
     }
 }
 
+/*
+ * first fit algorithm
+ * @param:file = file of instructions
+ * @param:size = size we are working with
+ * @param:head = head node
+ */
 void firstfit(FILE* file, long unsigned int size, node** head)
 {
-    byte line[50] = {'\n'};
-    byte command[10] = {0};
-    long unsigned int totalSize = 0;
+    byte line[50] = {'\n'}; //execution line
+    byte command[10] = {0}; //command
+    long unsigned int totalSize = 0; //size allocated
 
     int i = 0;
+    // loop through file
     while(fgets(line, sizeof(line), file) != NULL) {
         // line is a comment
         if (line[0] == '#')
@@ -486,12 +494,13 @@ void firstfit(FILE* file, long unsigned int size, node** head)
         }
         ++i;
 
+        // request to allocate a node
         if (strcmp(command, REQUEST) == 0)
         {
             byte pname[17] = {0}; //process name
             byte bpsize[11] = {0}; //process size stored as bytes
             long unsigned int lpsize; //process size
-            int nameLength = 0;
+            int nameLength = 0; //name length
 
             int j = 0;
             // get the process name
@@ -512,7 +521,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                 ++j;
                 ++i;
             }
-            lpsize = atol(bpsize);
+            lpsize = atol(bpsize); //size wanting to alloc
 
             // check if allocation size is valid
             if (lpsize > size || lpsize < 1) //not valid
@@ -521,16 +530,19 @@ void firstfit(FILE* file, long unsigned int size, node** head)
             }
             else //valid
             {
+                // first node
                 if (*head == NULL)
                 {
                     *head = (node*)malloc(sizeof(node));
                     setHead(head, nameLength, pname, &totalSize, lpsize);
                 }
+                // second node
                 else if ((*head)->next == NULL && ((size - ((**head).location + (**head).size)) >= lpsize))
                 {
-                    node* newNode = (node*)malloc(sizeof(node));
+                    node* newNode = (node*)malloc(sizeof(node)); //new node
                     memset(newNode->pname, 0, sizeof(newNode->pname));
-                    (*head)->next = newNode;
+
+                    (*head)->next = newNode; //put after head
                     newNode->prev = *head;
                     newNode->next = NULL;
                     newNode->location = (**head).location + (**head).size;
@@ -542,18 +554,21 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                     totalSize += newNode->size;
                     printf("ALLOCATED %s %ld\n", pname, newNode->location);
                 }
+                //more than 2 items in list
                 else
                 {
                     int spotFound = FALSE;
                     node* newNode;
                     node* temp = *head;
-
+                    // loop though the list
                     while (temp->next != NULL)
                     {
+                        // enough room found to alloc
                         if ((temp->next->location - (temp->size + temp->location)) >= lpsize)
                         {
                             newNode = (node*)malloc(sizeof(node));
                             memset(newNode->pname, 0, sizeof(newNode->pname));
+                            // set up new node
                             newNode->prev = temp;
                             newNode->next = temp->next;
                             temp->next = newNode;
@@ -567,15 +582,16 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                             totalSize += newNode->size;
                             spotFound = TRUE;
                             printf("ALLOCATED %s %ld\n", pname, newNode->location);
-                            break;
+                            break; // allocated, we can leave
                         }
                         temp = temp->next;
                     }
+                    // check last item
                     if (size - (temp->location + temp->size) >= lpsize && spotFound == FALSE)
                     {
                         newNode = (node*)malloc(sizeof(node));
                         memset(newNode->pname, 0, sizeof(newNode->pname));
-
+                        // set new node at end of list
                         temp->next = newNode;
                         newNode->prev = temp;
                         newNode->next = NULL;
@@ -588,6 +604,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                         totalSize += newNode->size;
                         printf("ALLOCATED %s %ld\n", pname, newNode->location);
                     }
+                    // nothing alloc'ed
                     else if (spotFound == FALSE)
                     {
                         printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
@@ -595,6 +612,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                 }
             }
         }
+        // release node
         else if (strcmp(command, RELEASE) == 0)
         {
             byte pname[17] = {0};
@@ -609,18 +627,21 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                 release(head, pname, &totalSize);
             }
         }
+        // list available or assigned
         else if (strcmp(command, LIST) == 0)
         {
             byte c2[17] = {0};
             getName(line, (byte *)&c2, &i);
             list(head, c2, totalSize, size);
         }
+        // find node
         else if (strcmp(command, FIND) == 0)
         {
             byte pname[17] = {0};
             getName(line, (byte *)&pname, &i);
             find(head, pname);
         }
+        // bad command
         else
         {
             fprintf(stderr, "invalid command\n");
@@ -631,15 +652,23 @@ void firstfit(FILE* file, long unsigned int size, node** head)
     }
 }
 
+/*
+ * next fit algorithm
+ * @param:file = file of instructions
+ * @param:size = size we are working with
+ * @param:head = head node
+ */
 void nextfit(FILE* file, long unsigned int size, node** head)
 {
-    byte line[50] = {'\n'};
-    byte command[10] = {0};
-    long unsigned int totalSize = 0;
-    node * _curNode = (node*)malloc(sizeof(node));
+    byte line[50] = {'\n'}; //line of instruction
+    byte command[10] = {0}; //command
+    long unsigned int totalSize = 0; //amount allocated
+
+    node * _curNode = (node*)malloc(sizeof(node)); //node to keep track of current position in list
     memset(_curNode->pname, 0, sizeof(_curNode->pname));
 
     int i = 0;
+    // loop instruction file
     while(fgets(line, sizeof(line), file) != NULL)
     {
         // line is a comment
@@ -653,12 +682,13 @@ void nextfit(FILE* file, long unsigned int size, node** head)
         }
         ++i;
 
+        // request alloc
         if (strcmp(command, REQUEST) == 0)
         {
             byte pname[17] = {0}; //process name
             byte bpsize[11] = {0}; //process size stored as bytes
             long unsigned int lpsize; //process size
-            int nameLength = 0;
+            int nameLength = 0; //length of name
 
             int j = 0;
             // get the process name
@@ -688,23 +718,29 @@ void nextfit(FILE* file, long unsigned int size, node** head)
             }
             else //valid
             {
+                // first item in list
                 if (*head == NULL)
                 {
                     *head = (node*)malloc(sizeof(node));
                     setHead(head, nameLength, pname, &totalSize, lpsize);
                     _curNode = *head;
                 }
+                // multiple items
                 else
                 {
                     node* newNode = (node*)malloc(sizeof(node));
                     memset(newNode->pname, 0, sizeof(newNode->pname));
-                    node* temp = _curNode;
-                    int spotFound = FALSE;
 
+                    node* temp = _curNode;
+                    int spotFound = FALSE; //flad for found location for alloc
+
+                    // loop starting at last spot we were on the list
                     while (_curNode->next != NULL)
                     {
+                        // enough room for alloc
                         if ((_curNode->next->location - (_curNode->location + _curNode->size)) >= lpsize)
                         {
+                            // set up new node
                             newNode->next = _curNode->next;
                             _curNode->next = newNode;
                             newNode->prev = _curNode;
@@ -717,15 +753,16 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                             }
                             totalSize += newNode->size;
                             printf("ALLOCATED %s %ld\n", pname, newNode->location);
-                            _curNode = newNode;
+                            _curNode = newNode; // set current node to spot of alloc
                             spotFound = TRUE;
                             break;
                         }
                         _curNode = _curNode->next;
                     }
-
+                    // check last spot to end of list
                     if (size - (_curNode->size + _curNode->location) >= lpsize && spotFound == FALSE)
                     {
+                        // set up node
                         _curNode->next = newNode;
                         newNode->prev = _curNode;
                         newNode->next = NULL;
@@ -737,9 +774,10 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                         }
                         totalSize += newNode->size;
                         printf("ALLOCATED %s %ld\n", pname, newNode->location);
-                        _curNode = newNode;
+                        _curNode = newNode; // set current node to alloc'ed node
                         spotFound = TRUE;
                     }
+                    // check before head
                     else if ((**head).location != 0 && (**head).location >= lpsize && spotFound == FALSE)
                     {
                         (*head)->prev = newNode;
@@ -756,20 +794,26 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                         _curNode = newNode;
                         spotFound = TRUE;
                     }
+                    // return current node back to its last position if no new alloc made
                     else
                     {
                         _curNode = temp;
                     }
 
+                    // no spot found
                     if (spotFound == FALSE)
                     {
                         node* newTemp = (node*)malloc(sizeof(node));
                         memset(newTemp->pname, 0, sizeof(newTemp->pname));
+
                         newNode = *head;
+                        // loop though nodes
                         while (newNode->next != NULL)
                         {
+                            // found location to alloc
                             if (newNode->next->location - (newNode->location + newNode->size) >= lpsize)
                             {
+                                // set up new node
                                 newTemp->next = newNode->next;
                                 newNode->next = newTemp;
                                 newTemp->prev = newNode;
@@ -782,13 +826,14 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                                 }
                                 totalSize += newTemp->size;
                                 printf("ALLOCATED %s %ld\n", pname, newTemp->location);
-                                _curNode = newTemp;
+                                _curNode = newTemp; // update current node position
                                 spotFound = TRUE;
                                 break;
                             }
                             newNode = newNode->next;
                         }
                     }
+                    // no room to allocate
                     if (spotFound == FALSE)
                     {
                         printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
@@ -797,6 +842,7 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                 }
             }
         }
+        // release node
         else if (strcmp(command, RELEASE) == 0)
         {
             byte pname[17] = {0};
@@ -811,18 +857,21 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                 release(head, pname, &totalSize);
             }
         }
+        // list available locations or assigned nodes
         else if (strcmp(command, LIST) == 0)
         {
             byte c2[17] = {0};
             getName(line, (byte *)&c2, &i);
             list(head, c2, totalSize, size);
         }
+        // find a node
         else if (strcmp(command, FIND) == 0)
         {
             byte pname[17] = {0};
             getName(line, (byte *)&pname, &i);
             find(head, pname);
         }
+        // bad command
         else
         {
             fprintf(stderr, "invalid command\n");
@@ -833,13 +882,20 @@ void nextfit(FILE* file, long unsigned int size, node** head)
     }
 }
 
+/*
+ * worst fit algorithm
+ * @param:file = file of instructions
+ * @param:size = size we are working with
+ * @param:head = head node
+ */
 void worstfit(FILE* file, long unsigned int size, node** head)
 {
-    byte line[50] = {'\n'};
-    byte command[10] = {0};
-    long unsigned int totalSize = 0;
+    byte line[50] = {'\n'}; //instruction line
+    byte command[10] = {0}; //command
+    long unsigned int totalSize = 0; //aloccated mem
 
     int i = 0;
+    // loop file
     while(fgets(line, sizeof(line), file) != NULL) {
         // line is a comment
         if (line[0] == '#')
@@ -852,12 +908,13 @@ void worstfit(FILE* file, long unsigned int size, node** head)
         }
         ++i;
 
+        // request alloc
         if (strcmp(command, REQUEST) == 0)
         {
             byte pname[17] = {0}; //process name
             byte bpsize[11] = {0}; //process size stored as bytes
             long unsigned int lpsize; //process size
-            int nameLength = 0;
+            int nameLength = 0; //name length
 
             int j = 0;
             // get the process name
@@ -878,7 +935,7 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                 ++j;
                 ++i;
             }
-            lpsize = atol(bpsize);
+            lpsize = atol(bpsize); //size we want to alloc
 
             // check if allocation size is valid
             if (lpsize > size || lpsize < 1) //not valid
@@ -887,23 +944,27 @@ void worstfit(FILE* file, long unsigned int size, node** head)
             }
             else //valid
             {
+                // set up head
                 if (*head == NULL) {
                     *head = (node *) malloc(sizeof(node));
                     setHead(head, nameLength, pname, &totalSize, lpsize);
                 }
+                //head already exists
                 else
                 {
                     node* newNode = (node*)malloc(sizeof(node));
                     memset(newNode->pname, 0, sizeof(newNode->pname));
-                    long unsigned int longestDist = 0;
-                    long unsigned int curDistance = 0;
-                    long unsigned int location = 1;
-                    int headCheck = FALSE;
-                    int locationFound = FALSE;
-                    newNode = *head;
 
+                    long unsigned int longestDist = 0; //longest dist found
+                    long unsigned int curDistance = 0; //current distance between nodes
+                    long unsigned int location = 1; // location of longest dist
+                    int headCheck = FALSE; //checked the head node
+                    int locationFound = FALSE; //found a location for alloc
+                    newNode = *head;
+                    // loop through nodes
                     while (newNode->next != NULL)
                     {
+                        // check before head
                         if (headCheck == FALSE && (**head).location != 0)
                         {
                             curDistance = (**head).location;
@@ -911,9 +972,11 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                             location = 0;
                             locationFound = TRUE;
                         }
+                        //no room before head
                         else
                         {
-                            curDistance = newNode->next->location - (newNode->size + newNode->location);
+                            curDistance = newNode->next->location - (newNode->size + newNode->location); //distance between nodes
+                            // bigger distance found
                             if (curDistance > longestDist && curDistance >= lpsize)
                             {
                                 longestDist = curDistance;
@@ -924,23 +987,28 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                         headCheck = TRUE;
                         newNode = newNode->next;
                     }
-                    curDistance = size - (newNode->location + newNode->size);
+                    curDistance = size - (newNode->location + newNode->size); //remaining distance
+                    //distance to end is bigger than longestDist
                     if (curDistance > longestDist && curDistance >= lpsize)
                     {
                         location = newNode->location + newNode->size;
                         locationFound = TRUE;
                     }
-
+                    // found a spot to alloc
                     if (locationFound == TRUE)
                     {
                         node* temp = (node*)malloc(sizeof(node));
                         memset(temp->pname, 0 , sizeof(temp->pname));
-                        int placed = FALSE;
+
+                        int placed = FALSE; //flag for placing node in list
                         newNode = *head;
+                        // loop nodes
                         while (newNode->next != NULL)
                         {
+                            // found longestDist to put node
                             if ((newNode->location + newNode->size) == location)
                             {
+                                // set up node
                                 temp->next = newNode->next;
                                 newNode->next = temp;
                                 temp->prev = newNode;
@@ -953,11 +1021,12 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                                 }
                                 totalSize += temp->size;
                                 printf("ALLOCATED %s %ld\n", pname, temp->location);
-                                placed = TRUE;
+                                placed = TRUE; // placed in mem
                                 break;
                             }
                             newNode = newNode->next;
                         }
+                        // check last node
                         if ((newNode->location + newNode->size) == location && placed == FALSE)
                         {
                             temp->next = newNode->next;
@@ -973,6 +1042,7 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                             printf("ALLOCATED %s %ld\n", pname, temp->location);
                         }
                     }
+                    // failed
                     else
                     {
                         printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
@@ -980,6 +1050,7 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                 }
             }
         }
+        // release node
         else if (strcmp(command, RELEASE) == 0)
         {
             byte pname[17] = {0};
@@ -994,18 +1065,21 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                 release(head, pname, &totalSize);
             }
         }
+        // list available mem or assigned nodes
         else if (strcmp(command, LIST) == 0)
         {
             byte c2[17] = {0};
             getName(line, (byte *)&c2, &i);
             list(head, c2, totalSize, size);
         }
+        // find node
         else if (strcmp(command, FIND) == 0)
         {
             byte pname[17] = {0};
             getName(line, (byte *)&pname, &i);
             find(head, pname);
         }
+        // bad command
         else
         {
             fprintf(stderr, "invalid command\n");
@@ -1016,11 +1090,14 @@ void worstfit(FILE* file, long unsigned int size, node** head)
     }
 }
 
+/*
+ * delete the linked list
+ * @param:head = head node
+ */
 void deleteNodes(node **head)
 {
     node* curNode = *head;
     node* temp;
-
     while(curNode->next != NULL)
     {
         temp = curNode->next;
@@ -1031,18 +1108,24 @@ void deleteNodes(node **head)
     *head = NULL;
 }
 
+/*
+ * the main function, reads in input from CL and then runs the requested algo on the user file
+ * @param:argc = amount or CL args
+ * @param:argv = the separate commands from CL
+ */
 int main(int argc, char** argv)
 {
     FILE* file;
-    char* endptr;
+    char* endptr; //holds extra data after strol()
     node* head = NULL;
 
-    if (argc != 4)
+    // enough args in CL
+    if (argc < 4)
     {
         fprintf(stderr, "invalid input\n");
         exit(-1);
     }
-    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50;*/
+    long unsigned int size = strtol(argv[2], &endptr, 10); //get size
 
     // between 2^4 and 2^30
     if (size < 16 || size > 1073741824)
@@ -1050,12 +1133,13 @@ int main(int argc, char** argv)
         fprintf(stderr, "invalid allocation size\n");
         exit(-1);
     }
+    // open file
     if ((file = fopen(argv[3]/*"test2"*/, "r")) == NULL)
     {
         fprintf(stderr, "error opening file\n");
         exit(-1);
     }
-
+    /* Sends the file off to whichever algo the user specified */
     if (strcmp(argv[1]/*"BESTFIT"*/, BESTFIT) == 0)
     {
         bestfit(file, size, &head);
@@ -1072,14 +1156,15 @@ int main(int argc, char** argv)
     {
         worstfit(file, size, &head);
     }
+    // bad command
     else
     {
         fprintf(stderr, "invalid method of allocation\n");
         fclose(file);
         exit(-1);
     }
-    fclose(file);
-
+    fclose(file); //close file
+    // delete all the nodes if they exist
     if (head != NULL)
         deleteNodes(&head);
 }
