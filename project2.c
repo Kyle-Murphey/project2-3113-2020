@@ -408,17 +408,15 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                 tempNode->next = newProc->next;
                                 tempNode->prev = newProc;
                                 newProc->next = tempNode;
-                                /*   ************************            MOVED****************************************************                 */
-                                tempNode->location = location;
-                                for (int letter = 0; letter < nameLength; ++letter)
-                                {
-                                    tempNode->pname[letter] = pname[letter];
-                                }
-                                tempNode->size = lpsize;
-                                totalSize += lpsize;
-                                printf("ALLOCATED %s %ld\n", pname, tempNode->location);
-                                /********************************************************************************/
                             }
+                            tempNode->location = location;
+                            for (int letter = 0; letter < nameLength; ++letter)
+                            {
+                                tempNode->pname[letter] = pname[letter];
+                            }
+                            tempNode->size = lpsize;
+                            totalSize += lpsize;
+                            printf("ALLOCATED %s %ld\n", pname, tempNode->location);
                         }
                         // failed
                         else
