@@ -346,7 +346,6 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                 tempNode->next = newProc->next;
                                 tempNode->prev = newProc;
                                 newProc->next = tempNode;
-                                tempNode->next->prev = tempNode;
                             }
                             tempNode->location = location;
                             for (int letter = 0; letter < nameLength; ++letter)
@@ -897,7 +896,6 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                             temp->next = newNode->next;
                             temp->prev = newNode;
                             newNode->next = temp;
-                            temp->next->prev = temp;
                             temp->location = newNode->location + newNode->size;
                             temp->size = lpsize;
                             for (int letter = 0; letter < nameLength; ++letter)
@@ -977,7 +975,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "invalid input\n");
         exit(-1);
     }
-    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50*/
+    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50;*/
 
     // between 2^4 and 2^30
     if (size < 16 || size > 1073741824)
@@ -991,7 +989,7 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    if (strcmp(argv[1]/*"ESTFIT"*/, BESTFIT) == 0)
+    if (strcmp(argv[1]/*"BESTFIT"*/, BESTFIT) == 0)
     {
         bestfit(file, size, &head);
     }
@@ -999,7 +997,7 @@ int main(int argc, char** argv)
     {
         firstfit(file, size, &head);
     }
-    else if (strcmp(argv[1]/*"NEXTFIT"*/, NEXTFIT) == 0)
+    else if (strcmp(argv[1]/*"NXTFIT"*/, NEXTFIT) == 0)
     {
         nextfit(file, size, &head);
     }
