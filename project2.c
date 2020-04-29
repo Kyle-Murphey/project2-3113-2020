@@ -387,7 +387,7 @@ void bestfit(FILE* file, long unsigned int size, node** head)
         else if (strcmp(command, FIND) == 0)
         {
             byte pname[17] = {0};
-            getName(line, (byte **)&pname, &i);
+            getName(line, (byte *)&pname, &i);
             find(head, pname);
         }
         else
@@ -545,7 +545,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
         else if (strcmp(command, LIST) == 0)
         {
             byte c2[17] = {0};
-            getName(line, (byte **)&c2, &i);
+            getName(line, (byte *)&c2, &i);
             list(head, c2, totalSize, size);
         }
         else if (strcmp(command, FIND) == 0)
