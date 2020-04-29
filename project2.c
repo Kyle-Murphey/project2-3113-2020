@@ -367,8 +367,8 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                         {
                             node* newNode = (node*)malloc(sizeof(node));
                             memset(newNode->pname, 0, sizeof(newNode->pname));
-                            //tempNode = *head;
-                            tempNode->prev = newNode;
+                            tempNode = *head;
+                            tempNode->prev = newNode; //put newNode before the head
                             newNode->next = tempNode;
                             newNode->prev = NULL;
                             newNode->location = 0;
@@ -378,17 +378,19 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                             }
                             newNode->size = lpsize;
                             *head = newNode;
-                            totalSize += lpsize;
+                            totalSize += lpsize; //inc alloc size
                             printf("ALLOCATED %s %ld\n", pname, newNode->location);
                             firstSpot = TRUE;
                         }
                         // check if room was found
                         if ((tempNode->next != NULL || tempNode->prev != NULL) && firstSpot == FALSE)
                         {
-                            int placed = FALSE;
+                            int placed = FALSE; //flag for being placed
                             newProc = *head;
+                            // loop through list
                             while (newProc->next != NULL)
                             {
+                                // found spot to place node
                                 if ((newProc->size + newProc->location) == location)
                                 {
                                     tempNode->next = newProc->next;
@@ -396,25 +398,29 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                     newProc->next = tempNode;
                                     tempNode->next->prev = tempNode;
                                     placed = TRUE;
-                                    break;
+                                    break; // node inserted
                                 }
                                 newProc = newProc->next;
                             }
+                            // check last node
                             if ((newProc->size + newProc->location) == location && placed == FALSE)
                             {
                                 tempNode->next = newProc->next;
                                 tempNode->prev = newProc;
                                 newProc->next = tempNode;
+                                /*   ************************            MOVED****************************************************                 */
+                                tempNode->location = location;
+                                for (int letter = 0; letter < nameLength; ++letter)
+                                {
+                                    tempNode->pname[letter] = pname[letter];
+                                }
+                                tempNode->size = lpsize;
+                                totalSize += lpsize;
+                                printf("ALLOCATED %s %ld\n", pname, tempNode->location);
+                                /********************************************************************************/
                             }
-                            tempNode->location = location;
-                            for (int letter = 0; letter < nameLength; ++letter)
-                            {
-                                tempNode->pname[letter] = pname[letter];
-                            }
-                            tempNode->size = lpsize;
-                            totalSize += lpsize;
-                            printf("ALLOCATED %s %ld\n", pname, tempNode->location);
                         }
+                        // failed
                         else
                         {
                             printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
@@ -423,6 +429,7 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                 }
             }
         }
+        // release node
         else if (strcmp(command, RELEASE) == 0)
         {
             byte pname[17] = {0};
@@ -437,25 +444,28 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                 release(head, pname, &totalSize);
             }
         }
+        // list a node
         else if (strcmp(command, LIST) == 0)
         {
             byte c2[17] = {0};
             getName(line, (byte *)&c2, &i);
             list(head, c2, totalSize, size);
         }
+        // find a node
         else if (strcmp(command, FIND) == 0)
         {
             byte pname[17] = {0};
             getName(line, (byte *)&pname, &i);
             find(head, pname);
         }
+        // bad command
         else
         {
             fprintf(stderr, "invalid command\n");
             exit(-1);
         }
         i = 0;
-        memset(command, 0, sizeof(command));
+        memset(command, 0, sizeof(command)); //reset command string
     }
 }
 
