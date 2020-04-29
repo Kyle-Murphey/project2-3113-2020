@@ -973,7 +973,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "invalid input\n");
         exit(-1);
     }
-    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50*/;
+    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50*/
 
     // between 2^4 and 2^30
     if (size < 16 || size > 1073741824)
