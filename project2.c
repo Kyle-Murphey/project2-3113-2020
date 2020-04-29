@@ -639,6 +639,7 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                             newNode->next = _curNode->next;
                             _curNode->next = newNode;
                             newNode->prev = _curNode;
+                            newNode->next->prev = newNode;
                             newNode->location = (*_curNode).location + (*_curNode).size;
                             newNode->size = lpsize;
                             for (int letter = 0; letter < nameLength; ++letter)
@@ -668,6 +669,7 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                         totalSize += newNode->size;
                         printf("ALLOCATED %s %ld\n", pname, newNode->location);
                         _curNode = newNode;
+                        spotFound = TRUE;
                     }
                     else if ((**head).location != 0 && (**head).location >= lpsize && spotFound == FALSE)
                     {
@@ -683,11 +685,46 @@ void nextfit(FILE* file, long unsigned int size, node** head)
                         totalSize += newNode->size;
                         printf("ALLOCATED %s %ld\n", pname, newNode->location);
                         _curNode = newNode;
+                        spotFound = TRUE;
                     }
                     else
                     {
                         _curNode = temp;
                     }
+
+                    if (spotFound == FALSE)
+                    {
+                        node* newTemp = (node*)malloc(sizeof(node));
+                        memset(newTemp->pname, 0, sizeof(newTemp->pname));
+                        newNode = *head;
+                        while (newNode->next != NULL)
+                        {
+                            if (newNode->next->location - (newNode->location + newNode->size) >= lpsize)
+                            {
+                                newTemp->next = newNode->next;
+                                newNode->next = newTemp;
+                                newTemp->prev = newNode;
+                                newTemp->next->prev = newTemp;
+                                newTemp->location = (*newNode).location + (*newNode).size;
+                                newTemp->size = lpsize;
+                                for (int letter = 0; letter < nameLength; ++letter)
+                                {
+                                    newTemp->pname[letter] = pname[letter];
+                                }
+                                totalSize += newTemp->size;
+                                printf("ALLOCATED %s %ld\n", pname, newTemp->location);
+                                _curNode = newTemp;
+                                spotFound = TRUE;
+                                break;
+                            }
+                            newNode = newNode->next;
+                        }
+                    }
+                    if (spotFound == FALSE)
+                    {
+                        printf("FAIL %s %s %ld\n", REQUEST, pname, lpsize);
+                    }
+
                 }
             }
         }
@@ -936,7 +973,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "invalid input\n");
         exit(-1);
     }
-    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50*/
+    long unsigned int size = strtol(argv[2], &endptr, 10);/* 268435456 50*/;
 
     // between 2^4 and 2^30
     if (size < 16 || size > 1073741824)
@@ -958,7 +995,7 @@ int main(int argc, char** argv)
     {
         firstfit(file, size, &head);
     }
-    else if (strcmp(argv[1]/*"NXTFIT"*/, NEXTFIT) == 0)
+    else if (strcmp(argv[1]/*"NEXTFIT"*/, NEXTFIT) == 0)
     {
         nextfit(file, size, &head);
     }
