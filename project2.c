@@ -24,29 +24,46 @@
 /* unsigned char */
 typedef unsigned char byte;
 
+/* node struct for holding the data */
 typedef struct node {
-    byte pname[17];
-    long unsigned int size;
-    long unsigned int location;
-    struct node* next;
-    struct node* prev
+    byte pname[17]; //name
+    long unsigned int size; //size of alloc
+    long unsigned int location; //starting point of data
+    struct node* next; //next in line
+    struct node* prev; //previous in line
 } node;
 
+/*
+ * sets the header node of the dllist
+ * @param:head = head node
+ * @param:nameLength = length of name
+ * @param:pname = name of process
+ * @param:totalSize = amount allocated
+ * @param:lpsize = amount we want to allocate
+ */
 void setHead(node** head, int nameLength, byte pname[17], long unsigned int* totalSize, long unsigned int lpsize)
 {
+    // set up the head
     (**head).location = 0;
     (**head).next = NULL;
     (**head).prev = NULL;
     memset((**head).pname, 0, sizeof((**head).pname));
+    // set the name
     for (int letter = 0; letter < nameLength; ++letter)
     {
         (**head).pname[letter] = pname[letter];
     }
     (**head).size = lpsize;
-    *totalSize += lpsize;
+    *totalSize += lpsize; // increase total size
     printf("ALLOCATED %s %ld\n", pname, (**head).location);
 }
 
+/*
+ * get the name for the process
+ * @param:line = instruction line
+ * @param:pname = place to store name
+ * @param:i = index of line
+ */
 void getName(byte* line, byte* pname, int* i)
 {
     int j = 0;
@@ -58,11 +75,18 @@ void getName(byte* line, byte* pname, int* i)
         ++*i;
         ++j;
     }
-    strcpy(pname, name);
+    strcpy(pname, name); //set the name
 }
 
+/*
+ * release the requested node
+ * @param:head = head of nodes
+ * @param:pname = name of process
+ * @param:totalSize = amount allocated
+ */
 void release(node** head, byte pname[17], long unsigned int *totalSize)
 {
+    // nothing allocated
     if (*totalSize == 0)
     {
         printf("FAIL %s %s\n", RELEASE, pname);
