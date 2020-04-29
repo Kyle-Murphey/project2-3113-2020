@@ -122,7 +122,6 @@ void list(node** head, byte c2[17], long unsigned int totalSize, long unsigned i
 
             while (temp->next != NULL)
             {
-                //distance = (temp->next->location + temp->next->size) - (temp->location + temp->size);
                 distance = (temp->next->location) - (temp->location + temp->size);
                 if (distance > 0)
                 {
@@ -312,6 +311,7 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                             tempNode = *head;
                             tempNode->prev = newProc;
                             newProc->next = tempNode;
+                            newProc->prev = NULL;
                             newProc->location = 0;
                             for (int letter = 0; letter < nameLength; ++letter)
                             {
@@ -335,6 +335,7 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                     tempNode->next = newProc->next;
                                     tempNode->prev = newProc;
                                     newProc->next = tempNode;
+                                    tempNode->next->prev = tempNode;
                                     placed = TRUE;
                                     break;
                                 }
@@ -345,6 +346,7 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                                 tempNode->next = newProc->next;
                                 tempNode->prev = newProc;
                                 newProc->next = tempNode;
+                                tempNode->next->prev = tempNode;
                             }
                             tempNode->location = location;
                             for (int letter = 0; letter < nameLength; ++letter)
@@ -489,6 +491,7 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                             newNode->prev = temp;
                             newNode->next = temp->next;
                             temp->next = newNode;
+                            newNode->next->prev = newNode;
                             newNode->location = temp->location + temp->size;
                             newNode->size = lpsize;
                             for (int letter = 0; letter < nameLength; ++letter)
@@ -894,6 +897,7 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                             temp->next = newNode->next;
                             temp->prev = newNode;
                             newNode->next = temp;
+                            temp->next->prev = temp;
                             temp->location = newNode->location + newNode->size;
                             temp->size = lpsize;
                             for (int letter = 0; letter < nameLength; ++letter)
