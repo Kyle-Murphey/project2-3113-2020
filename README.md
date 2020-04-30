@@ -8,7 +8,7 @@ Bugs: Invalid data types in the CL input or the file would result in a failing p
 
 I assume that all input will be correctly formatted and the file as well.
 
-main():
+main(): 
    * reads the CL input and sends the file off to the user specified alorithm.
    * runs initial checks on CL input.
     
