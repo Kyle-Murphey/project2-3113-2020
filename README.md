@@ -1,11 +1,10 @@
 # Kyle Murphey, Project 2
-****************I COULD NOT GET PROJECT TO RUN ON GRADESCOPE; IT KEPT TIMING OUT****************
 
 Compile: make all or gcc -c project2.c -o project2
 
 Run: ./project2 COMMAND N testfile.txt
 
-Bugs: Invalid data types in the CL input or the file would result in a failing program. There could also be an issue with pointers still pointing to chunks of memory rather than NULL at end of life. Memory is freed but pointers still exist.
+Bugs: Invalid data types in the CL input or the file would result in a failing program. There could also be an issue with pointers still pointing to chunks of memory rather than NULL at end of life. Memory is freed but pointers still exist. Bestfit() seems to "fall off" about halfway though the testing.
 
 I assume that all input will be correctly formatted and the file as well.
 

@@ -136,6 +136,7 @@ void release(node** head, byte pname[17], long unsigned int *totalSize)
             printf("FREE %s %ld %ld\n", temp->pname, temp->size, temp->location);
             free(temp);
             temp = NULL;
+            *head = NULL;
             return;
         }
         // last node
@@ -175,10 +176,12 @@ void list(node** head, byte c2[17], long unsigned int totalSize, long unsigned i
         if (totalSize == 0)
         {
             printf("(%ld, %ld)\n", size, totalSize);
+            return; //****************************************
         }
         else if (totalSize == size)
         {
             printf("FULL\n");
+            return; //***************************************
         }
         else
         {
@@ -207,7 +210,9 @@ void list(node** head, byte c2[17], long unsigned int totalSize, long unsigned i
                 printf("(%ld, %ld)", distance, (temp->location + temp->size));
             }
             printf("\n");
+            return; // ****************************************************************************** //
         }
+        printf("FULL\n");
     }
     // list assigned spots
     else if (strcmp(c2, ASSIGNED) == 0)
@@ -338,19 +343,39 @@ void bestfit(FILE* file, long unsigned int size, node** head)
                     node* newProc = (node*)malloc(sizeof(node));
                     memset(newProc->pname, 0, sizeof(newProc->pname));
                     // only head in list
-                    if ((*head)->next == NULL && (lpsize + totalSize) < size)
+                    if ((*head)->next == NULL && (lpsize + totalSize) < size /*&& (**head).location == 0*/) //*************************************************
                     {
-                        (*head)->next = newProc; //add after the head node
-                        newProc->prev = *head;
-                        newProc->next = NULL;
-                        newProc->location = (**head).size + (**head).location;
-                        for (int letter = 0; letter < nameLength; ++letter)
+                        if ((**head).location == 0 && (size - (**head).size >= lpsize))
                         {
-                            newProc->pname[letter] = pname[letter];
+                            (*head)->next = newProc; //add after the head node
+                            newProc->prev = *head;
+                            newProc->next = NULL;
+                            newProc->location = (**head).size + (**head).location;
+                            for (int letter = 0; letter < nameLength; ++letter)
+                            {
+                                newProc->pname[letter] = pname[letter];
+                            }
+                            newProc->size = lpsize;
+                            totalSize += lpsize; //inc the amount allocated
+                            printf("ALLOCATED %s %ld\n", pname, newProc->location);
                         }
-                        newProc->size = lpsize;
-                        totalSize += lpsize; //inc the amount allocated
-                        printf("ALLOCATED %s %ld\n", pname, newProc->location);
+                        else
+                        {
+                            if (size - (**head).size > (**head).location && (**head).location >= lpsize)
+                            {
+                                newProc->next = *head;
+                                (*head)->prev = newProc;
+                                newProc->location = 0;
+                                newProc->size = lpsize;
+                                for (int letter = 0; letter < nameLength; ++letter)
+                                {
+                                    newProc->pname[letter] = pname[letter];
+                                }
+                                totalSize += lpsize; //inc the amount allocated
+                                printf("ALLOCATED %s %ld\n", pname, newProc->location);
+                            }
+                        }
+
                     }
                     // multiple items in list
                     else
@@ -574,6 +599,23 @@ void firstfit(FILE* file, long unsigned int size, node** head)
                 {
                     *head = (node*)malloc(sizeof(node));
                     setHead(head, nameLength, pname, &totalSize, lpsize);
+                }
+                else if ((**head).location != 0 && (**head).location >= lpsize)
+                {
+                    node* newNode = (node*)malloc(sizeof(node)); //new node
+                    memset(newNode->pname, 0, sizeof(newNode->pname));
+
+                    newNode->next = *head;
+                    newNode->prev = NULL;
+                    newNode->location = 0;
+                    newNode->size = lpsize;
+                    for (int letter = 0; letter < nameLength; ++letter)
+                    {
+                        newNode->pname[letter] = pname[letter];
+                    }
+                    totalSize += newNode->size;
+                    *head = newNode;
+                    printf("ALLOCATED %s %ld\n", pname, newNode->location);
                 }
                 // second node
                 else if ((*head)->next == NULL && ((size - ((**head).location + (**head).size)) >= lpsize))
@@ -1043,7 +1085,7 @@ void worstfit(FILE* file, long unsigned int size, node** head)
                     while (newNode->next != NULL)
                     {
                         // check before head
-                        if (headCheck == FALSE && (**head).location != 0)
+                        if (headCheck == FALSE && (**head).location != 0 && (**head).location >= lpsize)
                         {
                             curDistance = (**head).location;
                             longestDist = curDistance;
