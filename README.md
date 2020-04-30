@@ -4,7 +4,7 @@ Compile: make all or gcc -c project2.c -o project2
 
 Run: ./project2 COMMAND N testfile.txt
 
-Bugs: Invalid data types in the CL input or the file would result in a failing program. There could also be an issue with pointers still pointing to chunks of memory rather than NULL at end of life. Memory is freed but pointers still exist. Bestfit() seems to "fall off" about halfway though the testing.
+Bugs: Invalid data types in the CL input or the file would result in a failing program. There could also be an issue with pointers still pointing to chunks of memory rather than NULL at end of life. Memory is freed but pointers still exist. Bestfit() seems to "fall off" about halfway though the testing. Nextfit() does not display the whole list of nodes when asked to: It stops after two nodes, even though the rest are in the list (verified by stepping through my program and seeing what the pointers were pointing to). Not sure why the list is different for nextfit(), but it is.
 
 I assume that all input will be correctly formatted and the file as well.
 
